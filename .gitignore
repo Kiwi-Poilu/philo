@@ -1,0 +1,5 @@
+srcs/*.o
+*.o
+CMakeLists.txt
+philo
+cmake-build-debug/
