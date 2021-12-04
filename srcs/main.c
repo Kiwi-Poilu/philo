@@ -49,14 +49,37 @@ void push(t_node **head, void *new_content)
 	(*head) = new_node;
 }
 
-void create_list(t_params *params)
+void *do_philo(void *params)
+{
+	t_params *args = (t_params *)params;
+	printf("Philo is sleeping\n");
+	usleep(args->time_to_sleep * 1000);
+	printf("Philo is eating\n");
+	usleep(args->time_to_eat * 1000);
+	printf("Philo is dying\n");
+	usleep(args->time_to_eat * 1000);
+	return (NULL);
+}
+
+void philo(t_params *params)
 {
 	int i;
+	pthread_t *thread;
 
+	i = 0;
+	thread = malloc(sizeof(pthread_t) * params->nb_of_philos);
+	if (thread == NULL)
+		ft_putstr("Error could not malloc nb_of_philos threads\n");
+	while (i < params->nb_of_philos)
+	{
+		pthread_create(&thread[i], NULL, do_philo, (void *) params);
+		i++;
+	}
 	i = 0;
 	while (i < params->nb_of_philos)
 	{
-		pthread_create()
+		pthread_join(thread[i], NULL);
+		i++;
 	}
 }
 
@@ -68,7 +91,7 @@ int	main(int ac, char **av)
 	i = 0;
 	if (parse_input(ac, av, &params) == 1)
 		return (1);
-	create_list(&params);
 	get_time();
+	philo(&params);
 	return (0);
 }

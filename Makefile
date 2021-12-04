@@ -22,7 +22,7 @@ all : $(NAME)
 	$(CC) $(CFLAGS) $< -I$(INC) -c -o $@
 
 $(NAME) : $(OBJS)
-	$(CC) $(OBJS) $(CFLAGS) -o $(NAME)
+	$(CC) -lpthread $(OBJS) $(CFLAGS) -o $(NAME)
 
 clean :
 		$(RM) $(OBJS)
