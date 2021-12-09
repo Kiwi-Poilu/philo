@@ -16,14 +16,19 @@ typedef struct s_params
 	int time_to_eat;
 	int time_to_sleep;
 	int nb_of_meals;
+	int casualties;
 }				t_params;
 
-typedef struct s_node
+typedef struct	s_data
 {
-	struct s_node *next;
-	struct s_node *prev;
-	void	*content;
-}				t_node;
+	size_t id;
+	long last_meal;
+	t_params *params;
+	pthread_t philo;
+	pthread_mutex_t fork;
+	pthread_mutex_t *friend_fork;
+	pthread_mutex_t	*printf_lock;
+}				t_data;
 
 //main.c
 int ft_putstr(char *str);

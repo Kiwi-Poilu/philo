@@ -18,11 +18,8 @@ CFLAGS = -g3 -Wall -Werror -Wextra
 
 all : $(NAME)
 
-%.o: %.c
-	$(CC) $(CFLAGS) $< -I$(INC) -c -o $@
-
 $(NAME) : $(OBJS)
-	$(CC) -lpthread $(OBJS) $(CFLAGS) -o $(NAME)
+	$(CC) $(OBJS) -lpthread -o $(NAME)
 
 clean :
 		$(RM) $(OBJS)

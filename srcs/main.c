@@ -12,6 +12,8 @@
 
 #include "../include/philo.h"
 
+int casualties = 0;
+
 long get_time(void)
 {
 	static long start_time = 0;
@@ -32,53 +34,105 @@ long get_time(void)
 	return (actual_time);
 }
 
-void push(t_node **head, void *new_content)
+int philo_death(t_data *data)
 {
-	t_node *new_node;
-
-	//allocate
-	new_node = (t_node*)malloc(sizeof(t_node));
-	//put in the content
-	new_node->content = new_content;
-	//self explanatory
-	new_node->next = (*head);
-	new_node->prev = NULL;
-	//on deplace
-	if ((*head) != NULL)
-		(*head)->prev = new_node;
-	(*head) = new_node;
+	if (get_time() - data->last_meal > data->params->time_to_eat)
+		return (1);
+	return (0);
 }
 
-void *do_philo(void *params)
+void philo_sleep(t_data *data)
 {
-	t_params *args = (t_params *)params;
-	printf("Philo is sleeping\n");
-	usleep(args->time_to_sleep * 1000);
-	printf("Philo is eating\n");
-	usleep(args->time_to_eat * 1000);
-	printf("Philo is dying\n");
-	usleep(args->time_to_eat * 1000);
+	pthread_mutex_lock(data->printf_lock);
+	printf("%lu %lu is sleeping\n", get_time(), data->id);
+	usleep(data->params->time_to_sleep * 1000);
+	pthread_mutex_unlock(data->printf_lock);
+}
+
+void philo_eat(t_data *data)
+{
+	pthread_mutex_lock(&data->fork);
+	pthread_mutex_lock(data->friend_fork);
+	pthread_mutex_lock(data->printf_lock);
+	printf("%lu %lu has taken a fork\n", get_time(), data->id);
+	printf("%lu %lu is eating\n", get_time(), data->id);
+	pthread_mutex_unlock(data->printf_lock);
+	usleep(data->params->time_to_eat * 1000);
+	data->last_meal = get_time();
+	pthread_mutex_unlock(&data->fork);
+	pthread_mutex_unlock(data->friend_fork);
+}
+
+void philo_think(t_data *data)
+{
+	pthread_mutex_lock(data->printf_lock);
+	printf("%lu %lu is thinking\n", get_time(), data->id);
+	pthread_mutex_unlock(data->printf_lock);
+}
+
+void *do_philo(t_data *data)
+{
+	while (1)
+	{
+		if (philo_death(data) == 1 || casualties == 1)
+		{
+			data->params->casualties = 1;
+			printf("%lu %lu has died\n", get_time(), data->id);
+			break;
+		}
+		philo_eat(data);
+		if (philo_death(data) == 1 || casualties == 1)
+		{
+			data->params->casualties = 1;
+			printf("%lu %lu has died\n", get_time(), data->id);
+			break;
+		}
+		philo_sleep(data);
+		if (philo_death(data) == 1 || casualties == 1)
+		{
+			data->params->casualties = 1;
+			printf("%lu %lu has died\n", get_time(), data->id);
+			break;
+		}
+		philo_think(data);
+		if (philo_death(data) == 1 || casualties == 1)
+		{
+			data->params->casualties = 1;
+			printf("%lu %lu has died\n", get_time(), data->id);
+			break;
+		}
+	}
 	return (NULL);
 }
 
 void philo(t_params *params)
 {
 	int i;
-	pthread_t *thread;
+	t_data *data;
+	pthread_mutex_t printf_lock;
 
+	data = malloc(sizeof(t_data) * params->nb_of_philos);
+	pthread_mutex_init(&printf_lock, NULL);
 	i = 0;
-	thread = malloc(sizeof(pthread_t) * params->nb_of_philos);
-	if (thread == NULL)
-		ft_putstr("Error could not malloc nb_of_philos threads\n");
 	while (i < params->nb_of_philos)
 	{
-		pthread_create(&thread[i], NULL, do_philo, (void *) params);
+		data[i].id = i;
+		data[i].params = params;
+		data[i].printf_lock = &printf_lock;
+		pthread_mutex_init(&data[i].fork, NULL);
+		data[(i + 1) % params->nb_of_philos].friend_fork = &data[i].fork;
 		i++;
 	}
 	i = 0;
 	while (i < params->nb_of_philos)
 	{
-		pthread_join(thread[i], NULL);
+		pthread_create(&(data[i].philo), NULL, (void *(*)(void *)) do_philo, (void *) &data[i]);
+		i++;
+	}
+	i = 0;
+	while (i < params->nb_of_philos)
+	{
+		pthread_join(data[i].philo, NULL);
 		i++;
 	}
 }
@@ -91,6 +145,7 @@ int	main(int ac, char **av)
 	i = 0;
 	if (parse_input(ac, av, &params) == 1)
 		return (1);
+	params.casualties = 0;
 	get_time();
 	philo(&params);
 	return (0);
