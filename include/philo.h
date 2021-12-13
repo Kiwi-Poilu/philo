@@ -23,10 +23,11 @@ typedef struct	s_data
 {
 	size_t id;
 	long last_meal;
+	int meal;
 	t_params *params;
 	pthread_t philo;
-	pthread_mutex_t fork;
-	pthread_mutex_t *friend_fork;
+	pthread_mutex_t right_fork;
+	pthread_mutex_t *left_fork;
 	pthread_mutex_t	*printf_lock;
 }				t_data;
 
@@ -46,7 +47,7 @@ int	ft_isalpha(int c);
 int	ft_isdigit(int c);
 int	ft_isspace(int c);
 int	ft_isupper(int c);
-void print_params(t_params *params);
+long get_time(void);
 
 //utils.c
 int	ft_putstr(char *str);

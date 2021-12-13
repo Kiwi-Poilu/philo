@@ -38,6 +38,7 @@ int fill_params(int ac, char **av, t_params *params)
 	params->time_to_sleep = ft_strtol(av[4]);
 	if (ac == 6)
 		params->nb_of_meals = ft_strtol(av[5]);
+	else (params->nb_of_meals = -1);
 	if (errno == ERANGE)
 		return (1);
 	return (0);
@@ -46,10 +47,10 @@ int fill_params(int ac, char **av, t_params *params)
 int	parse_input(int ac, char **av, t_params *params)
 {
 	if (ac < 5 || ac > 6)
-		return (ft_putstr("Invalid number of arguments\n"));
+		return (printf("Invalid number of arguments\n"));
 	if (check_if_nb(ac, av) == 1)
-		return (ft_putstr("Some of the arguments are not numbers\n"));
+		return (printf("Some of the arguments are not numbers\n"));
 	if (fill_params(ac, av, params) == 1)
-		return (ft_putstr("Some of the arguments exceed the limits of integers\n"));
+		return (printf("Some of the arguments exceed the limits of integers\n"));
 	return (0);
 }

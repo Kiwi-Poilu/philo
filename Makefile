@@ -6,7 +6,6 @@ SRCS =	srcs/main.c \
 		srcs/parsing.c \
 		srcs/ft_strtol.c \
 		srcs/utils.c \
-		srcs/utils2.c
 
 OBJS = ${SRCS:.c=.o}
 

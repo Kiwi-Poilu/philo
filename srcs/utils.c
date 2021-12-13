@@ -29,11 +29,22 @@ int	ft_isupper(int c)
 	return (0);
 }
 
-void print_params(t_params *params)
+long get_time(void)
 {
-	printf("nb of philos = %d\n", params->nb_of_philos);
-	printf("time to die = %d\n", params->time_to_die);
-	printf("time to eat = %d\n", params->time_to_eat);
-	printf("time to sleep  = %d\n", params->time_to_sleep);
-	printf("nb of meals = %d\n", params->nb_of_meals);
+	static long start_time = 0;
+	long actual_time;
+	struct timeval tv;
+
+	if (start_time == 0)
+	{
+		gettimeofday(&tv, NULL);
+		start_time = (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+		actual_time = 0;
+	}
+	else
+	{
+		gettimeofday(&tv, NULL);
+		actual_time = (tv.tv_sec * 1000) + (tv.tv_usec / 1000) - start_time;
+	}
+	return (actual_time);
 }
