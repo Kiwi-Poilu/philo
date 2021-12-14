@@ -12,21 +12,30 @@
 
 #include "../include/philo.h"
 
+void philo_kill(t_data *data)
+{
+	pthread_mutex_lock(data->printf_lock);
+	if (data->params->casualties != 1)
+		printf("%lu %zu has died\n",  get_time(), data->id);
+	data->params->casualties = 1;
+	pthread_mutex_unlock(data->printf_lock);
+}
 
 void	printf_locked(t_data *data, const char *msg1, char *msg2)
 {
 	pthread_mutex_lock(data->printf_lock);
-	printf("%lu %lu %s\n", get_time(), data->id, msg1);
-	if (msg2 != NULL)
-		printf("%lu %lu %s\n", get_time(), data->id, msg2); 
+	if (data->params->casualties != 1)
+	{
+		printf("%lu %lu %s\n", get_time(), data->id, msg1);
+		if (msg2 != NULL)
+			printf("%lu %lu %s\n", get_time(), data->id, msg2);
+	}
 	pthread_mutex_unlock(data->printf_lock);
 }
 
 void	*check_death(void *tmp)
 {
-	
 	int i;
-
 
 	t_data *data = (t_data *)tmp;
 	i = 0;
@@ -35,25 +44,31 @@ void	*check_death(void *tmp)
 		i = 0;
 		while (i < data->params->nb_of_philos)
 		{
+			pthread_mutex_lock(data[i].printf_lock);
+			if (data->params->casualties != 0)
+			{
+				pthread_mutex_unlock(data[i].printf_lock);
+				return (NULL);
+			}
+			pthread_mutex_unlock(data[i].printf_lock);
+			pthread_mutex_lock(&data[i].self_lock);
 			if ((get_time() - data[i].last_meal) >= data->params->time_to_die)
 			{
-				
-				
-				data->params->casualties = 1;
-				printf_locked(&data[i], "has died", NULL);
-				//exit(1);
+				pthread_mutex_unlock(&data[i].self_lock);
+				philo_kill(&data[i]);
+				return (NULL);
 			}
+			pthread_mutex_unlock(&data[i].self_lock);
 			i++;
 		}
 	}
-	return (tmp);
 }
 
 
 void philo_sleep(t_data *data)
 {
-	printf_locked(data, "is sleeping", NULL);
-	usleep(data->params->time_to_sleep * 1000);
+		printf_locked(data, "is sleeping", NULL);
+		usleep(data->params->time_to_sleep * 1000);
 }
 
 void philo_eat(t_data *data)
@@ -67,15 +82,16 @@ void philo_eat(t_data *data)
 		pthread_mutex_lock(data->left_fork);
 	else
 		pthread_mutex_lock(&data->right_fork);
+	pthread_mutex_lock(&data->self_lock);
 	if ((get_time() - data->last_meal) >= data->params->time_to_die)
-		exit(1);
-	//pthread_mutex_lock(data->printf_lock);
-	//printf("last meal %zu = %lu\n", data->id, data->last_meal);
-	//pthread_mutex_unlock(data->printf_lock);
+		philo_kill(data);
+	pthread_mutex_unlock(&data->self_lock);
 	printf_locked(data, "has taken a fork", "is eating");
+	pthread_mutex_lock(&data->self_lock);
 	data->last_meal = get_time();
+	data->meal++;
+	pthread_mutex_unlock(&data->self_lock);
 	usleep(data->params->time_to_eat * 1000);
-	//data->last_meal = get_time();
 	pthread_mutex_unlock(&data->right_fork);
 	pthread_mutex_unlock(data->left_fork);
 }
@@ -88,14 +104,32 @@ void philo_think(t_data *data)
 }
 
 void *do_philo(t_data *data)
-{	
-	while (data->meal != data->params->nb_of_meals)
+{
+	while (1)
 	{
+		pthread_mutex_lock(data->printf_lock);
+		if (data->params->casualties != 0)
+		{
+			pthread_mutex_unlock(data->printf_lock);
+			break;
+		}
+		pthread_mutex_unlock(data->printf_lock);
 		philo_eat(data);
+		pthread_mutex_lock(data->printf_lock);
+		if (data->meal == data->params->nb_of_meals)
+			data->params->enough_meals++;
+		pthread_mutex_unlock(data->printf_lock);
 		philo_sleep(data);
 		printf_locked(data, "is thinking", NULL);
-		//data->meal++;
+		pthread_mutex_lock(data->printf_lock);
+		if (data->params->enough_meals >= data->params->nb_of_philos)
+		{
+			pthread_mutex_unlock(data->printf_lock);
+			break;
+		}
+		pthread_mutex_unlock(data->printf_lock);
 	}
+
 	return (NULL);
 }
 
@@ -107,13 +141,16 @@ void philo(t_params *params)
 	pthread_t watcher;
 
 	params->casualties = 0;
+	params->enough_meals = 0;
 	data = malloc(sizeof(t_data) * params->nb_of_philos);
 	pthread_mutex_init(&printf_lock, NULL);
 	i = 0;
 	while (i != params->nb_of_philos)
 	{
+		pthread_mutex_init(&data[i].self_lock, NULL);
 		data[i].id = i + 1;
 		data[i].meal = 0;
+		data[i].last_meal = 0;
 		data[i].params = params;
 		data[i].printf_lock = &printf_lock;
 		pthread_mutex_init(&data[(i) % params->nb_of_philos].right_fork, NULL);
@@ -128,13 +165,13 @@ void philo(t_params *params)
 		i++;
 	}
 	i = 0;
-	printf("Salut\n");
 	while (i < params->nb_of_philos)
 	{
 		pthread_join(data[i].philo, NULL);
 		i++;
 	}
-	printf("Bite\n");
+	free(data);
+	pthread_join(watcher, NULL);
 }
 
 int	main(int ac, char **av)

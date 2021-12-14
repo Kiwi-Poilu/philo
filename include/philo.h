@@ -17,6 +17,7 @@ typedef struct s_params
 	int time_to_sleep;
 	int nb_of_meals;
 	int casualties;
+	int enough_meals;
 }				t_params;
 
 typedef struct	s_data
@@ -26,6 +27,7 @@ typedef struct	s_data
 	int meal;
 	t_params *params;
 	pthread_t philo;
+	pthread_mutex_t self_lock;
 	pthread_mutex_t right_fork;
 	pthread_mutex_t *left_fork;
 	pthread_mutex_t	*printf_lock;
