@@ -12,6 +12,16 @@
 
 #include "../include/philo.h"
 
+
+void	printf_locked(t_data *data, const char *msg1, char *msg2)
+{
+	pthread_mutex_lock(data->printf_lock);
+	printf("%lu %lu %s\n", get_time(), data->id, msg1);
+	if (msg2 != NULL)
+		printf("%lu %lu %s\n", get_time(), data->id, msg2); 
+	pthread_mutex_unlock(data->printf_lock);
+}
+
 void	*check_death(void *tmp)
 {
 	
@@ -25,11 +35,13 @@ void	*check_death(void *tmp)
 		i = 0;
 		while (i < data->params->nb_of_philos)
 		{
-			if ((get_time() - data[i].last_meal) > data->params->time_to_die)
+			if ((get_time() - data[i].last_meal) >= data->params->time_to_die)
 			{
-				printf("%lu PHILO %zu DIED\n", get_time(), data[i].id);
-				printf("%lu %lu\n", data[i].last_meal, get_time());
-				exit(127);
+				
+				
+				data->params->casualties = 1;
+				printf_locked(&data[i], "has died", NULL);
+				//exit(1);
 			}
 			i++;
 		}
@@ -37,14 +49,6 @@ void	*check_death(void *tmp)
 	return (tmp);
 }
 
-void	printf_locked(t_data *data, const char *msg1, char *msg2)
-{
-	pthread_mutex_lock(data->printf_lock);
-	printf("%lu %lu %s\n", get_time(), data->id, msg1);
-	if (msg2 != NULL)
-		printf("%lu %lu %s\n", get_time(), data->id, msg2); 
-	pthread_mutex_unlock(data->printf_lock);
-}
 
 void philo_sleep(t_data *data)
 {
@@ -63,10 +67,15 @@ void philo_eat(t_data *data)
 		pthread_mutex_lock(data->left_fork);
 	else
 		pthread_mutex_lock(&data->right_fork);
+	if ((get_time() - data->last_meal) >= data->params->time_to_die)
+		exit(1);
+	//pthread_mutex_lock(data->printf_lock);
+	//printf("last meal %zu = %lu\n", data->id, data->last_meal);
+	//pthread_mutex_unlock(data->printf_lock);
 	printf_locked(data, "has taken a fork", "is eating");
 	data->last_meal = get_time();
 	usleep(data->params->time_to_eat * 1000);
-	data->last_meal = get_time();
+	//data->last_meal = get_time();
 	pthread_mutex_unlock(&data->right_fork);
 	pthread_mutex_unlock(data->left_fork);
 }
@@ -85,7 +94,7 @@ void *do_philo(t_data *data)
 		philo_eat(data);
 		philo_sleep(data);
 		printf_locked(data, "is thinking", NULL);
-		data->meal++;
+		//data->meal++;
 	}
 	return (NULL);
 }
@@ -119,11 +128,13 @@ void philo(t_params *params)
 		i++;
 	}
 	i = 0;
+	printf("Salut\n");
 	while (i < params->nb_of_philos)
 	{
 		pthread_join(data[i].philo, NULL);
 		i++;
 	}
+	printf("Bite\n");
 }
 
 int	main(int ac, char **av)
