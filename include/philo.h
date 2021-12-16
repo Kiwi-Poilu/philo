@@ -11,13 +11,13 @@
 
 typedef struct s_params
 {
-	int nb_of_philos;
+	size_t nb_of_philos;
 	int time_to_die;
 	int time_to_eat;
 	int time_to_sleep;
 	int nb_of_meals;
 	int casualties;
-	int enough_meals;
+	ssize_t enough_meals;
 }				t_params;
 
 typedef struct	s_data
