@@ -13,12 +13,12 @@ CC = clang
 
 RM = rm -f
 
-CFLAGS = -g3 -Wall -Werror -Wextra
+CFLAGS = -g3 -Wall -Werror -Wextra #-fsanitize=thread
 
 all : $(NAME)
 
 $(NAME) : $(OBJS)
-	$(CC) $(OBJS) -lpthread -o $(NAME)
+	$(CC) $(OBJS) -lpthread -o $(NAME) #-fsanitize=thread
 
 clean :
 		$(RM) $(OBJS)
