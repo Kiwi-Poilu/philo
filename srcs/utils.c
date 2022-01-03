@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: kiwi <marvin@42.fr>                        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/01/02 14:46:03 by kiwi              #+#    #+#             */
+/*   Updated: 2022/01/02 14:46:06 by kiwi             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../include/philo.h"
 
 int	ft_isalpha(int c)
@@ -29,11 +41,11 @@ int	ft_isupper(int c)
 	return (0);
 }
 
-long get_time(void)
+long	get_time(void)
 {
-	static long start_time = 0;
-	long actual_time;
-	struct timeval tv;
+	static long		start_time = 0;
+	long			actual_time;
+	struct timeval	tv;
 
 	if (start_time == 0)
 	{
